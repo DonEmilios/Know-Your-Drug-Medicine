@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Know Your Drug/Medicine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+            line-height: 1.4;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 18px 60px 18px 20px;
+            font-size: 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .search-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-50%) scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .search-btn:active {
+            transform: translateY(-50%) scale(0.98);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .drug-name {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .drug-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section h3 {
+            color: #4a5568;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .section p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .error {
+            display: none;
+            background: #fee;
+            border: 1px solid #fcc;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            color: #c33;
+        }
+
+        .suggestions {
+            margin-top: 15px;
+        }
+
+        .suggestion-item {
+            display: inline-block;
+            background: #e2e8f0;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .suggestion-item:hover {
+            background: #cbd5e0;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💊 Know Your Drug/Medicine</h1>
+            <p>Enter the name of any medication to learn how it works and how your body processes it</p>
+        </div>
+
+        <div class="search-container">
+            <input type="text" class="search-input" placeholder="Enter drug name (e.g., Aspirin, Ibuprofen, Metformin...)" id="drugInput">
+            <button class="search-btn" id="searchBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            Looking up medication information...
+        </div>
+
+        <div class="error" id="error">
+            <strong>Drug not found</strong><br>
+            Please check the spelling or try a different medication name.
+        </div>
+
+        <div class="results" id="results">
+            <div class="drug-name" id="drugName">
+                <div class="drug-icon">💊</div>
+                <span id="drugNameText"></span>
+            </div>
+            
+            <div class="section">
+                <h3>🎯 How It Works</h3>
+                <p id="mechanism"></p>
+            </div>
+            
+            <div class="section">
+                <h3>🏃‍♂️ How Your Body Processes It</h3>
+                <p id="metabolism"></p>
+            </div>
+            
+            <div class="section">
+                <h3>📋 Common Uses</h3>
+                <p id="uses"></p>
+            </div>
+        </div>
+
+        <div class="suggestions">
+            <strong>Try these examples:</strong><br>
+            <span class="suggestion-item" onclick="searchDrug('Aspirin')">Aspirin</span>
+            <span class="suggestion-item" onclick="searchDrug('Ibuprofen')">Ibuprofen</span>
+            <span class="suggestion-item" onclick="searchDrug('Metformin')">Metformin</span>
+            <span class="suggestion-item" onclick="searchDrug('Lisinopril')">Lisinopril</span>
+        </div>
+    </div>
+
+    <script>
+        // API Integration for real drug data
+        async function fetchDrugInfo(drugName) {
+            try {
+                // Try RxNorm API first (most comprehensive for basic drug info)
+                const rxnormResponse = await fetch(`https://rxnav.nlm.nih.gov/REST/drugs.json?name=${encodeURIComponent(drugName)}`);
+                const rxnormData = await rxnormResponse.json();
+                
+                if (rxnormData.drugGroup && rxnormData.drugGroup.conceptGroup) {
+                    // Try to get detailed info from OpenFDA
+                    const fdaResponse = await fetch(`https://api.fda.gov/drug/label.json?search=openfda.generic_name:"${encodeURIComponent(drugName)}"&limit=1`);
+                    const fdaData = await fdaResponse.json();
+                    
+                    return processDrugData(rxnormData, fdaData, drugName);
+                }
+                
+                throw new Error('Drug not found');
+            } catch (error) {
+                console.error('API Error:', error);
+                return null;
+            }
+        }
+
+        function processDrugData(rxnormData, fdaData, originalName) {
+            let drugInfo = {
+                name: originalName.charAt(0).toUpperCase() + originalName.slice(1),
+                mechanism: 'Detailed mechanism information not available from current API sources. This would typically describe how the medication works at the molecular level in your body.',
+                metabolism: 'Detailed metabolism information not available from current API sources. This would describe how your body processes and eliminates the medication.',
+                uses: 'Common medical uses not fully detailed in current API response.'
+            };
+
+            // Extract available information from APIs
+            if (rxnormData.drugGroup && rxnormData.drugGroup.conceptGroup) {
+                const concepts = rxnormData.drugGroup.conceptGroup.find(group => 
+                    group.tty === 'IN' || group.tty === 'PIN'
+                );
+                if (concepts && concepts.conceptProperties) {
+                    drugInfo.name = concepts.conceptProperties[0].name || drugInfo.name;
+                }
+            }
+
+            // If FDA data is available, extract what we can
+            if (fdaData.results && fdaData.results.length > 0) {
+                const result = fdaData.results[0];
+                
+                if (result.indications_and_usage) {
+                    drugInfo.uses = Array.isArray(result.indications_and_usage) 
+                        ? result.indications_and_usage.join(' ') 
+                        : result.indications_and_usage;
+                }
+                
+                if (result.clinical_pharmacology) {
+                    const clinPharm = Array.isArray(result.clinical_pharmacology) 
+                        ? result.clinical_pharmacology.join(' ') 
+                        : result.clinical_pharmacology;
+                    
+                    if (clinPharm.toLowerCase().includes('mechanism')) {
+                        drugInfo.mechanism = clinPharm.substring(0, 500) + '...';
+                    }
+                }
+            }
+
+            return drugInfo;
+        }
+
+        // Fallback database for demo purposes when APIs are unavailable
+        const fallbackDatabase = {
+            'aspirin': {
+                name: 'Aspirin (Acetylsalicylic Acid)',
+                mechanism: 'Aspirin works by irreversibly blocking the enzyme cyclooxygenase (COX), which prevents the production of prostaglandins. This reduces inflammation, pain, and fever. It also prevents blood platelets from clumping together, which is why it\'s used for heart protection.',
+                metabolism: 'After ingestion, aspirin is rapidly absorbed in the stomach and small intestine. The liver converts it into salicylic acid, which is the active form. Your kidneys then filter it out of your blood, with most being eliminated within 2-3 hours for low doses, but this can extend to 15-30 hours for higher doses.',
+                uses: 'Pain relief, fever reduction, inflammation control, and cardiovascular protection. Commonly used for headaches, muscle aches, arthritis, and as a blood thinner to prevent heart attacks and strokes.'
+            },
+            'ibuprofen': {
+                name: 'Ibuprofen',
+                mechanism: 'Ibuprofen is a non-steroidal anti-inflammatory drug (NSAID) that works by blocking both COX-1 and COX-2 enzymes, but unlike aspirin, this blocking is reversible. This reduces the production of prostaglandins, leading to decreased pain, inflammation, and fever.',
+                metabolism: 'Ibuprofen is well absorbed from the stomach and reaches peak blood levels in 1-2 hours. Your liver processes it through glucuronidation and oxidation. About 90% is eliminated by the kidneys within 24 hours, with a half-life of 2-4 hours.',
+                uses: 'Treatment of pain, fever, and inflammation. Effective for headaches, dental pain, menstrual cramps, muscle aches, arthritis, and minor injuries. Also used to reduce fever in children and adults.'
+            }
+        };
+
+        const drugInput = document.getElementById('drugInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const results = document.getElementById('results');
+
+        async function searchDrug(drugName = null) {
+            const query = drugName || drugInput.value.trim().toLowerCase();
+            
+            if (!query) {
+                return;
+            }
+
+            // Show loading state
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            results.style.display = 'none';
+
+            try {
+                // Try to fetch from real APIs first
+                let drugInfo = await fetchDrugInfo(query);
+                
+                // If API fails, fall back to local database
+                if (!drugInfo) {
+                    drugInfo = fallbackDatabase[query];
+                }
+
+                loading.style.display = 'none';
+                
+                if (drugInfo) {
+                    displayResults(drugInfo);
+                } else {
+                    error.style.display = 'block';
+                    error.innerHTML = `<strong>Drug not found</strong><br>
+                        Please check the spelling or try a different medication name.<br>
+                        <span style="color:#888;font-size:0.9em;">(API may be unavailable or CORS blocked)</span>`;
+                }
+            } catch (err) {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.innerHTML = `<strong>Drug not found</strong><br>
+                    Please check the spelling or try a different medication name.<br>
+                    <span style="color:#888;font-size:0.9em;">(Error: ${err.message})</span>`;
+                console.error('Search error:', err);
+            }
+        }
+
+        function displayResults(drug) {
+            document.getElementById('drugNameText').textContent = drug.name;
+            document.getElementById('mechanism').textContent = drug.mechanism;
+            document.getElementById('metabolism').textContent = drug.metabolism;
+            document.getElementById('uses').textContent = drug.uses;
+            
+            results.style.display = 'block';
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Event listeners
+        searchBtn.addEventListener('click', () => searchDrug());
+        
+        drugInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchDrug();
+            }
+        });
+
+        drugInput.addEventListener('input', (e) => {
+            if (e.target.value) {
+                e.target.value = e.target.value.toLowerCase();
+            }
+        });
+    </script>
+</body>
+</html>
